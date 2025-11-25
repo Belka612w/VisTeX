@@ -15,7 +15,8 @@ app.use(bodyParser.json());
 const TEMP_DIR = path.join(__dirname, 'temp');
 const TEMPLATES_FILE = path.join(__dirname, 'templates.json');
 
-fs.ensureDirSync(TEMP_DIR);
+// Ensure temp directory exists and is empty on startup
+fs.emptyDirSync(TEMP_DIR);
 // Ensure templates file exists and every template has a stable id.
 // This also migrates old files that were created without `id`.
 const ensureTemplatesFile = () => {
@@ -92,7 +93,7 @@ app.post('/api/compile', async (req, res) => {
     } else {
         texContent = `
 \\documentclass[preview]{standalone}
-\\usepackage{amsmath,amssymb,amsfonts}
+\\usepackage{amsmath,amssymb,amsfonts, mathtools}
 \\usepackage{xcolor}
 \\begin{document}
 \\color[HTML]{${cleanColor}}
