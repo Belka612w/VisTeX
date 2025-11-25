@@ -1,0 +1,260 @@
+:root {
+  --bg-color: #121212;
+  --surface-color: #1e1e1e;
+  --primary-color: #bb86fc;
+  --secondary-color: #03dac6;
+  --text-color: #e0e0e0;
+  --border-radius: 12px;
+  --glass-bg: rgba(30, 30, 30, 0.7);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Meiryo', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-container {
+  display: flex;
+  height: 100%;
+  padding: 20px;
+  gap: 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Responsive Layout */
+@media (max-width: 900px) {
+  .app-container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .panel {
+    min-height: 400px;
+  }
+}
+
+.panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: var(--glass-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-panel {
+  flex: 1;
+  min-width: 300px;
+  gap: 20px;
+}
+
+.right-panel {
+  flex: 1.5;
+  gap: 20px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 10px 0;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+textarea {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-color);
+  padding: 15px;
+  font-family: 'Fira Code', monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+textarea:focus {
+  border-color: var(--primary-color);
+}
+
+button {
+  background: var(--primary-color);
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.2s;
+}
+
+button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.preview-container {
+  flex: 1;
+  min-height: 300px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  position: relative;
+  background-image:
+    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.preview-image {
+  max-width: 90%;
+  max-height: 90%;
+  transition: transform 0.2s;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+label {
+  font-size: 12px;
+  color: #aaa;
+}
+
+input[type="color"] {
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+}
+
+input[type="number"],
+select {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+  padding: 8px;
+  border-radius: 4px;
+}
+
+select {
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+select option {
+  background-color: #2a2a2a;
+  color: var(--text-color);
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.segmented-control button {
+  flex: 1;
+  background: transparent;
+  color: #aaa;
+  padding: 6px;
+  font-size: 14px;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.segmented-control button.active {
+  background: var(--primary-color);
+  color: #000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.template-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.template-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.template-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.error-message {
+  color: #cf6679;
+  font-family: monospace;
+  white-space: pre-wrap;
+  background: rgba(207, 102, 121, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  max-height: 100px;
+  overflow-y: auto;
+}
