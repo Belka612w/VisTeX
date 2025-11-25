@@ -4,8 +4,7 @@ VisTeX は、Windows 環境で動作するオフラインの LaTeX 数式画像�
 ローカルにインストールされた TeX Live 環境を利用して、高品質な数式画像（PNG/SVG）を生成・保存できます。
 Web 技術（React + Node.js）を用いつつ、デスクトップアプリのように手軽に利用できるのが特徴です。
 
-![VisTeX Screenshot](https://via.placeholder.com/800x450.png?text=VisTeX+Screenshot)
-*(ここにスクリーンショットを貼ると分かりやすくなります)*
+![VisTeX Screenshot](ScreenShot.png)
 
 ## ✨ 特徴
 
