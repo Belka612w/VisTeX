@@ -12,6 +12,8 @@ export type Template = {
   latex: string;
 };
 
+export type CopyStatus = 'idle' | 'copying' | 'copied' | 'failed';
+
 type TemplateMode = 'standard' | 'tikz';
 
 const TEMPLATE_STORAGE_KEY = 'vistex.customTemplates';
@@ -65,6 +67,7 @@ function App() {
     tikz: getDefaultTemplate('tikz'),
   });
   const [templateStorageReady, setTemplateStorageReady] = useState<boolean>(false);
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -107,8 +110,21 @@ function App() {
   }, [customTemplates, useCustomTemplate, templateStorageReady]);
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const copyResetTimer = useRef<number | null>(null);
   const templateMode: TemplateMode = isTikzMode ? 'tikz' : 'standard';
   const activeCustomTemplate = customTemplates[templateMode];
+  const isClipboardAvailable = typeof navigator !== 'undefined' && !!navigator.clipboard;
+
+  const clearCopyResetTimer = () => {
+    if (copyResetTimer.current !== null) {
+      window.clearTimeout(copyResetTimer.current);
+      copyResetTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => clearCopyResetTimer();
+  }, []);
 
   const compile = async () => {
     setLoading(true);
@@ -176,6 +192,39 @@ function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleCopyToClipboard = async () => {
+    if (!image) return;
+    clearCopyResetTimer();
+
+    if (!isClipboardAvailable) {
+      setCopyStatus('failed');
+      copyResetTimer.current = window.setTimeout(() => setCopyStatus('idle'), 1800);
+      return;
+    }
+
+    try {
+      setCopyStatus('copying');
+      const response = await fetch(image);
+      const blob = await response.blob();
+
+      if (navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
+        const clipboardItem = new ClipboardItem({ [blob.type || 'image/png']: blob });
+        await navigator.clipboard.write([clipboardItem]);
+      } else if (navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(image);
+      } else {
+        throw new Error('Clipboard API is not available');
+      }
+
+      setCopyStatus('copied');
+    } catch (err) {
+      console.error('Failed to copy image', err);
+      setCopyStatus('failed');
+    } finally {
+      copyResetTimer.current = window.setTimeout(() => setCopyStatus('idle'), 1800);
+    }
   };
 
   const handleTemplateSelect = (templateLatex: string) => {
@@ -306,6 +355,9 @@ function App() {
               dpi={dpi} setDpi={setDpi}
               onSave={handleSave}
               isTikzMode={isTikzMode}
+              onCopy={handleCopyToClipboard}
+              canCopy={!!image && isClipboardAvailable}
+              copyStatus={copyStatus}
             />
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { CopyStatus } from '../App';
 
 interface Props {
     format: 'png' | 'svg';
@@ -11,6 +12,9 @@ interface Props {
     setDpi: (d: number) => void;
     onSave: () => void;
     isTikzMode: boolean;
+    onCopy: () => void;
+    canCopy: boolean;
+    copyStatus: CopyStatus;
 }
 
 const Controls: React.FC<Props> = ({
@@ -19,7 +23,10 @@ const Controls: React.FC<Props> = ({
     bgColor, setBgColor,
     dpi, setDpi,
     onSave,
-    isTikzMode
+    isTikzMode,
+    onCopy,
+    canCopy,
+    copyStatus
 }) => {
     return (
         <div className="controls">
@@ -89,7 +96,21 @@ const Controls: React.FC<Props> = ({
 
             <div className="control-group" style={{ justifyContent: 'flex-end' }}>
                 <label>&nbsp;</label>
-                <button onClick={onSave}>画像を保存</button>
+                <div className="action-buttons">
+                    <button
+                        onClick={onCopy}
+                        disabled={!canCopy || copyStatus === 'copying'}
+                    >
+                        {copyStatus === 'copying' ? 'コピー中...' : 'クリップボードにコピー'}
+                    </button>
+                    <button onClick={onSave} disabled={!canCopy}>画像を保存</button>
+                </div>
+                {copyStatus === 'copied' && (
+                    <span className="action-note action-note--success">クリップボードにコピーしました</span>
+                )}
+                {copyStatus === 'failed' && (
+                    <span className="action-note action-note--error">コピーに失敗しました。ブラウザの設定を確認してください。</span>
+                )}
             </div>
         </div>
     );

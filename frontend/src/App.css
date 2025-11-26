@@ -181,6 +181,14 @@ button:active {
   transform: translateY(0);
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
 button.secondary {
   background: transparent;
   border: 1px solid var(--primary-color);
@@ -265,6 +273,25 @@ button.small {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-note {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.action-note--success {
+  color: #9ae6b4;
+}
+
+.action-note--error {
+  color: #ffc8d2;
 }
 
 label {
