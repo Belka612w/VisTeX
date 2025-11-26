@@ -10,13 +10,21 @@ interface Props {
 const Preview: React.FC<Props> = ({ image, loading, error, useWhiteBackground }) => {
     return (
         <div className={`preview-container ${useWhiteBackground ? 'preview-container--white' : ''}`}>
-            {loading && <div style={{ position: 'absolute', color: '#888' }}>コンパイル中...</div>}
-            {error && <div className="error-message">{error}</div>}
+            {loading && (
+                <div className="preview-overlay" role="status" aria-live="polite">
+                    コンパイル中...
+                </div>
+            )}
+            {!loading && error && (
+                <div className="preview-overlay preview-overlay--error" role="alert">
+                    <div className="error-message">{error}</div>
+                </div>
+            )}
             {!loading && !error && image && (
                 <img src={image} alt="Equation Preview" className="preview-image" />
             )}
             {!loading && !error && !image && (
-                <div style={{ color: '#666' }}>ここにプレビューが表示されます</div>
+                <div className="preview-placeholder">ここにプレビューが表示されます</div>
             )}
         </div>
     );

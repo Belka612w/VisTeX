@@ -217,10 +217,10 @@ function App() {
   return (
     <div className="app-container">
       <div className="panel left-panel">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="panel-header">
           <h2>LaTeX 入力</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="segmented-control" style={{ minWidth: '170px' }}>
+          <div className="panel-actions">
+            <div className="segmented-control">
               <button
                 className={isTikzMode ? '' : 'active'}
                 onClick={() => setIsTikzMode(false)}
@@ -229,7 +229,7 @@ function App() {
               </button>
               <button
                 className={isTikzMode ? 'active' : ''}
-              onClick={() => {
+                onClick={() => {
                   setIsTikzMode(true);
                   setIsFullMode(false);
                   setFormat('svg');
@@ -238,7 +238,9 @@ function App() {
                 TikZモード
               </button>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: isTikzMode ? 'default' : 'pointer', fontSize: '12px', opacity: isTikzMode ? 0.5 : 1 }}>
+            <label
+              className={`checkbox-label ${isTikzMode ? 'checkbox-label--disabled' : ''}`}
+            >
               <input
                 type="checkbox"
                 checked={isFullMode}
@@ -249,35 +251,35 @@ function App() {
             </label>
           </div>
         </div>
-        <Editor
-          ref={editorRef}
-          value={latex}
-          onChange={setLatex}
-          placeholder={isTikzMode ? 'ここに TikZ 図のコード（例: \\begin{tikzpicture} ...）を書いてね' : 'ここに数式を入力してね'}
-        />
-        <TemplateManager onSelect={handleTemplateSelect} currentLatex={latex} />
-        <TexTemplateEditor
-          enabled={useCustomTemplate}
-          disabled={isFullMode}
-          template={activeCustomTemplate}
-          onToggle={setUseCustomTemplate}
-          onChange={handleCustomTemplateChange}
-          onReset={handleTemplateReset}
-          isTikzMode={isTikzMode}
-        />
+        <div className="panel-body">
+          <div className="section-card section-card--editor">
+            <Editor
+              ref={editorRef}
+              value={latex}
+              onChange={setLatex}
+              placeholder={isTikzMode ? 'ここに TikZ 図のコード（例: \\begin{tikzpicture} ...）を書いてね' : 'ここに数式を入力してね'}
+            />
+          </div>
+          <div className="section-card section-card--templates">
+            <TemplateManager onSelect={handleTemplateSelect} currentLatex={latex} />
+          </div>
+          <div className="section-card section-card--tex-template">
+            <TexTemplateEditor
+              enabled={useCustomTemplate}
+              disabled={isFullMode}
+              template={activeCustomTemplate}
+              onToggle={setUseCustomTemplate}
+              onChange={handleCustomTemplateChange}
+              onReset={handleTemplateReset}
+              isTikzMode={isTikzMode}
+            />
+          </div>
+        </div>
       </div>
       <div className="panel right-panel">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="panel-header">
           <h2>プレビュー</h2>
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontSize: '12px',
-              cursor: 'pointer',
-            }}
-          >
+          <label className="checkbox-label">
             <input
               type="checkbox"
               checked={isPreviewWhiteBg}
@@ -286,20 +288,26 @@ function App() {
             背景を白にする
           </label>
         </div>
-        <Preview
-          image={image}
-          loading={loading}
-          error={error}
-          useWhiteBackground={isPreviewWhiteBg}
-        />
-        <Controls
-          format={format} setFormat={setFormat}
-          color={color} setColor={setColor}
-          bgColor={bgColor} setBgColor={setBgColor}
-          dpi={dpi} setDpi={setDpi}
-          onSave={handleSave}
-          isTikzMode={isTikzMode}
-        />
+        <div className="panel-body panel-body--right">
+          <div className="section-card section-card--preview">
+            <Preview
+              image={image}
+              loading={loading}
+              error={error}
+              useWhiteBackground={isPreviewWhiteBg}
+            />
+          </div>
+          <div className="section-card section-card--controls">
+            <Controls
+              format={format} setFormat={setFormat}
+              color={color} setColor={setColor}
+              bgColor={bgColor} setBgColor={setBgColor}
+              dpi={dpi} setDpi={setDpi}
+              onSave={handleSave}
+              isTikzMode={isTikzMode}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

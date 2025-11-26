@@ -50,9 +50,15 @@ const Controls: React.FC<Props> = ({
 
             <div className="control-group">
                 <label>文字色</label>
-                <div style={{ display: 'flex', gap: '5px' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-                    <input type="text" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: '70px' }} />
+                    <input
+                        type="text"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                        style={{ flex: '1 1 140px' }}
+                        aria-label="文字色コードを入力"
+                    />
                 </div>
             </div>
 

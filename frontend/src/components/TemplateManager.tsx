@@ -55,34 +55,33 @@ const TemplateManager: React.FC<Props> = ({ onSelect, currentLatex }) => {
     };
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <div className="template-manager">
+            <div className="section-header">
                 <h3>テンプレート</h3>
-                <button className="secondary" onClick={() => setIsSaving(!isSaving)} style={{ fontSize: '12px', padding: '5px 10px' }}>
+                <button className="secondary compact" onClick={() => setIsSaving(!isSaving)}>
                     {isSaving ? 'キャンセル' : '+ 現在の式を保存'}
                 </button>
             </div>
 
             {isSaving && (
-                <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
+                <div className="template-save-row">
                     <input
                         placeholder="テンプレート名"
                         value={name}
                         onChange={e => setName(e.target.value)}
-                        style={{ flex: 1 }}
                     />
-                    <button onClick={handleSave} style={{ padding: '5px 10px' }}>保存</button>
+                    <button onClick={handleSave}>保存</button>
                 </div>
             )}
 
             <div className="template-list">
                 {templates.map(t => (
                     <div key={t.id} className="template-item" onClick={() => onSelect(t.latex)}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+                        <span className="template-item__name">{t.name}</span>
                         <button
-                            className="secondary"
-                            style={{ padding: '2px 6px', fontSize: '12px', marginLeft: '5px' }}
+                            className="secondary small"
                             onClick={(e) => handleDelete(e, t.id)}
+                            aria-label={`${t.name} を削除`}
                         >
                             ×
                         </button>
