@@ -79,6 +79,16 @@ const runCommand = (cmd, args, cwd) => {
     });
 };
 
+const applyTemplatePlaceholders = (template, replacements) => {
+    return Object.entries(replacements).reduce((acc, [key, value]) => {
+        if (typeof value === 'undefined' || value === null) {
+            return acc;
+        }
+        const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+        return acc.replace(regex, () => value);
+    }, template);
+};
+
 app.post('/api/compile', async (req, res) => {
     const {
         latex,
@@ -88,15 +98,29 @@ app.post('/api/compile', async (req, res) => {
         dpi = 300,
         isFullMode = false,
         isTikzMode = false,
+        customTemplate,
     } = req.body;
     const id = uuidv4();
     const texFile = path.join(TEMP_DIR, `${id}.tex`);
 
     // Convert hex color to HTML model for xcolor if needed, or just pass it.
     const cleanColor = color.replace('#', '');
+    const colorWithHash = color.startsWith('#') ? color : `#${cleanColor}`;
+    const bgColorNoHash = bgColor.startsWith('#') ? bgColor.replace('#', '') : bgColor;
+    const bgColorWithHash = bgColor.startsWith('#') ? bgColor : (bgColor === 'transparent' ? bgColor : `#${bgColor}`);
+    const customTemplateSource = typeof customTemplate === 'string' ? customTemplate : '';
+    const hasCustomTemplate = customTemplateSource.trim().length > 0;
 
     let texContent;
-    if (isFullMode) {
+    if (hasCustomTemplate) {
+        texContent = applyTemplatePlaceholders(customTemplateSource, {
+            LATEX: latex,
+            COLOR: cleanColor,
+            COLOR_HEX: colorWithHash,
+            BG_COLOR: bgColorNoHash,
+            BG_COLOR_HEX: bgColorWithHash,
+        });
+    } else if (isFullMode) {
         texContent = latex;
     } else if (isTikzMode) {
         texContent = `

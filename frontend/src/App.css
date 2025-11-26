@@ -263,3 +263,58 @@ select option {
   max-height: 100px;
   overflow-y: auto;
 }
+
+.template-editor {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.template-editor__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.template-editor textarea {
+  height: 220px;
+  min-height: 160px;
+  font-size: 14px;
+}
+
+.template-editor__note {
+  font-size: 12px;
+  margin: 0;
+  color: #bbb;
+}
+
+.template-editor__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.template-editor__placeholders {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #bbb;
+}
+
+.template-editor__placeholders div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.template-editor__placeholders code {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}

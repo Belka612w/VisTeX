@@ -4,12 +4,46 @@ import Editor from './components/Editor';
 import Preview from './components/Preview';
 import Controls from './components/Controls';
 import TemplateManager from './components/TemplateManager';
+import TexTemplateEditor from './components/TexTemplateEditor';
 
 export type Template = {
   id: string;
   name: string;
   latex: string;
 };
+
+type TemplateMode = 'standard' | 'tikz';
+
+const TEMPLATE_STORAGE_KEY = 'vistex.customTemplates';
+
+const DEFAULT_STANDARD_TEMPLATE = String.raw`\documentclass[preview]{standalone}
+\usepackage{amsmath,amssymb,amsfonts, mathtools}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\begin{document}
+\color[HTML]{ {{COLOR}} }
+$ {{LATEX}} $
+\end{document}
+`;
+
+const DEFAULT_TIKZ_TEMPLATE = String.raw`\documentclass[tikz,border=2mm]{standalone}
+\usepackage{amsmath,amssymb,amsfonts, mathtools}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\begin{document}
+\color[HTML]{ {{COLOR}} }
+{{LATEX}}
+\end{document}
+`;
+
+const DEFAULT_TEMPLATES: Record<TemplateMode, string> = {
+  standard: DEFAULT_STANDARD_TEMPLATE,
+  tikz: DEFAULT_TIKZ_TEMPLATE,
+};
+
+const getDefaultTemplate = (mode: TemplateMode) => DEFAULT_TEMPLATES[mode];
 
 function App() {
   const [latex, setLatex] = useState<string>('\\mathcal{M} = (E, \\mathcal{I})');
@@ -25,18 +59,80 @@ function App() {
   const [dpi, setDpi] = useState<number>(300);
   const [isFullMode, setIsFullMode] = useState<boolean>(false);
   const [isTikzMode, setIsTikzMode] = useState<boolean>(false);
+  const [useCustomTemplate, setUseCustomTemplate] = useState<boolean>(false);
+  const [customTemplates, setCustomTemplates] = useState<Record<TemplateMode, string>>({
+    standard: getDefaultTemplate('standard'),
+    tikz: getDefaultTemplate('tikz'),
+  });
+  const [templateStorageReady, setTemplateStorageReady] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setTemplateStorageReady(true);
+      return;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(TEMPLATE_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.templates) {
+          setCustomTemplates({
+            standard: typeof parsed.templates.standard === 'string' && parsed.templates.standard.trim().length > 0
+              ? parsed.templates.standard
+              : getDefaultTemplate('standard'),
+            tikz: typeof parsed.templates.tikz === 'string' && parsed.templates.tikz.trim().length > 0
+              ? parsed.templates.tikz
+              : getDefaultTemplate('tikz'),
+          });
+        }
+        if (typeof parsed?.enabled === 'boolean') {
+          setUseCustomTemplate(parsed.enabled);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load custom templates', err);
+    } finally {
+      setTemplateStorageReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!templateStorageReady || typeof window === 'undefined') return;
+    const payload = {
+      templates: customTemplates,
+      enabled: useCustomTemplate,
+    };
+    window.localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(payload));
+  }, [customTemplates, useCustomTemplate, templateStorageReady]);
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const templateMode: TemplateMode = isTikzMode ? 'tikz' : 'standard';
+  const activeCustomTemplate = customTemplates[templateMode];
 
   const compile = async () => {
     setLoading(true);
     setError(null);
     const effectiveFormat: 'png' | 'svg' = isTikzMode ? 'svg' : format;
     try {
+      const payload: Record<string, unknown> = {
+        latex,
+        format: effectiveFormat,
+        color,
+        bgColor,
+        dpi,
+        isFullMode,
+        isTikzMode,
+      };
+
+      if (useCustomTemplate && !isFullMode && activeCustomTemplate.trim().length > 0) {
+        payload.customTemplate = activeCustomTemplate;
+      }
+
       const response = await fetch('http://localhost:3001/api/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latex, format: effectiveFormat, color, bgColor, dpi, isFullMode, isTikzMode }),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (data.success) {
@@ -58,7 +154,18 @@ function App() {
       if (latex) compile();
     }, 800);
     return () => clearTimeout(timer);
-  }, [latex, format, color, bgColor, dpi, isFullMode, isTikzMode]);
+  }, [
+    latex,
+    format,
+    color,
+    bgColor,
+    dpi,
+    isFullMode,
+    isTikzMode,
+    useCustomTemplate,
+    customTemplates.standard,
+    customTemplates.tikz,
+  ]);
 
   const handleSave = () => {
     if (!image) return;
@@ -91,6 +198,20 @@ function App() {
       const newCursorPos = start + templateLatex.length;
       textarea.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
+  };
+
+  const handleTemplateReset = () => {
+    setCustomTemplates(prev => ({
+      ...prev,
+      [templateMode]: getDefaultTemplate(templateMode),
+    }));
+  };
+
+  const handleCustomTemplateChange = (value: string) => {
+    setCustomTemplates(prev => ({
+      ...prev,
+      [templateMode]: value,
+    }));
   };
 
   return (
@@ -135,6 +256,15 @@ function App() {
           placeholder={isTikzMode ? 'ここに TikZ 図のコード（例: \\begin{tikzpicture} ...）を書いてね' : 'ここに数式を入力してね'}
         />
         <TemplateManager onSelect={handleTemplateSelect} currentLatex={latex} />
+        <TexTemplateEditor
+          enabled={useCustomTemplate}
+          disabled={isFullMode}
+          template={activeCustomTemplate}
+          onToggle={setUseCustomTemplate}
+          onChange={handleCustomTemplateChange}
+          onReset={handleTemplateReset}
+          isTikzMode={isTikzMode}
+        />
       </div>
       <div className="panel right-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
