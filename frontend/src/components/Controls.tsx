@@ -94,23 +94,35 @@ const Controls: React.FC<Props> = ({
                 </div>
             )}
 
-            <div className="control-group" style={{ justifyContent: 'flex-end' }}>
-                <label>&nbsp;</label>
-                <div className="action-buttons">
-                    <button
-                        onClick={onCopy}
-                        disabled={!canCopy || copyStatus === 'copying'}
-                    >
-                        {copyStatus === 'copying' ? 'コピー中...' : 'クリップボードにコピー'}
-                    </button>
-                    <button onClick={onSave} disabled={!canCopy}>画像を保存</button>
+            <div className="control-group control-group--actions">
+                <label>出力</label>
+                <div className="control-actions">
+                    <div className="action-status">
+                        {copyStatus === 'copied' && (
+                            <span className="action-note action-note--success">クリップボードにコピーしました</span>
+                        )}
+                        {copyStatus === 'failed' && (
+                            <span className="action-note action-note--error">コピーに失敗しました。ブラウザの設定を確認してください。</span>
+                        )}
+                        {copyStatus === 'idle' && (
+                            <span className="action-note">
+                                {canCopy ? 'クリップボードにコピー・画像保存が利用できます' : 'プレビュー生成後にコピー/保存できます'}
+                            </span>
+                        )}
+                        {copyStatus === 'copying' && (
+                            <span className="action-note">コピー中...</span>
+                        )}
+                    </div>
+                    <div className="action-buttons">
+                        <button
+                            onClick={onCopy}
+                            disabled={!canCopy || copyStatus === 'copying'}
+                        >
+                            {copyStatus === 'copying' ? 'コピー中...' : 'クリップボードにコピー'}
+                        </button>
+                        <button onClick={onSave} disabled={!canCopy}>画像を保存</button>
+                    </div>
                 </div>
-                {copyStatus === 'copied' && (
-                    <span className="action-note action-note--success">クリップボードにコピーしました</span>
-                )}
-                {copyStatus === 'failed' && (
-                    <span className="action-note action-note--error">コピーに失敗しました。ブラウザの設定を確認してください。</span>
-                )}
             </div>
         </div>
     );
