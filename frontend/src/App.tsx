@@ -23,17 +23,19 @@ function App() {
   const [bgColor, setBgColor] = useState<string>('transparent');
   const [dpi, setDpi] = useState<number>(300);
   const [isFullMode, setIsFullMode] = useState<boolean>(false);
+  const [isTikzMode, setIsTikzMode] = useState<boolean>(false);
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
   const compile = async () => {
     setLoading(true);
     setError(null);
+    const effectiveFormat: 'png' | 'svg' = isTikzMode ? 'svg' : format;
     try {
       const response = await fetch('http://localhost:3001/api/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latex, format, color, bgColor, dpi, isFullMode }),
+        body: JSON.stringify({ latex, format: effectiveFormat, color, bgColor, dpi, isFullMode, isTikzMode }),
       });
       const data = await response.json();
       if (data.success) {
@@ -55,13 +57,14 @@ function App() {
       if (latex) compile();
     }, 800);
     return () => clearTimeout(timer);
-  }, [latex, format, color, bgColor, dpi, isFullMode]);
+  }, [latex, format, color, bgColor, dpi, isFullMode, isTikzMode]);
 
   const handleSave = () => {
     if (!image) return;
+    const effectiveFormat: 'png' | 'svg' = isTikzMode ? 'svg' : format;
     const link = document.createElement('a');
     link.href = image;
-    link.download = `equation_${Date.now()}.${format}`;
+    link.download = `equation_${Date.now()}.${effectiveFormat}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -94,16 +97,42 @@ function App() {
       <div className="panel left-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2>LaTeX 入力</h2>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '12px' }}>
-            <input
-              type="checkbox"
-              checked={isFullMode}
-              onChange={(e) => setIsFullMode(e.target.checked)}
-            />
-            フルモード
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="segmented-control" style={{ minWidth: '170px' }}>
+              <button
+                className={isTikzMode ? '' : 'active'}
+                onClick={() => setIsTikzMode(false)}
+              >
+                数式モード
+              </button>
+              <button
+                className={isTikzMode ? 'active' : ''}
+              onClick={() => {
+                  setIsTikzMode(true);
+                  setIsFullMode(false);
+                  setFormat('svg');
+                }}
+              >
+                TikZモード
+              </button>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: isTikzMode ? 'default' : 'pointer', fontSize: '12px', opacity: isTikzMode ? 0.5 : 1 }}>
+              <input
+                type="checkbox"
+                checked={isFullMode}
+                disabled={isTikzMode}
+                onChange={(e) => setIsFullMode(e.target.checked)}
+              />
+              フルモード
+            </label>
+          </div>
         </div>
-        <Editor ref={editorRef} value={latex} onChange={setLatex} />
+        <Editor
+          ref={editorRef}
+          value={latex}
+          onChange={setLatex}
+          placeholder={isTikzMode ? 'ここに TikZ 図のコード（例: \\begin{tikzpicture} ...）を書いてね' : 'ここに数式を入力してね'}
+        />
         <TemplateManager onSelect={handleTemplateSelect} currentLatex={latex} />
       </div>
       <div className="panel right-panel">
@@ -115,6 +144,7 @@ function App() {
           bgColor={bgColor} setBgColor={setBgColor}
           dpi={dpi} setDpi={setDpi}
           onSave={handleSave}
+          isTikzMode={isTikzMode}
         />
       </div>
     </div>

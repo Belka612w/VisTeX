@@ -10,6 +10,7 @@ interface Props {
     dpi: number;
     setDpi: (d: number) => void;
     onSave: () => void;
+    isTikzMode: boolean;
 }
 
 const Controls: React.FC<Props> = ({
@@ -17,7 +18,8 @@ const Controls: React.FC<Props> = ({
     color, setColor,
     bgColor, setBgColor,
     dpi, setDpi,
-    onSave
+    onSave,
+    isTikzMode
 }) => {
     return (
         <div className="controls">
@@ -26,7 +28,9 @@ const Controls: React.FC<Props> = ({
                 <div className="segmented-control">
                     <button
                         className={format === 'png' ? 'active' : ''}
-                        onClick={() => setFormat('png')}
+                        onClick={() => { if (!isTikzMode) setFormat('png'); }}
+                        disabled={isTikzMode}
+                        title={isTikzMode ? 'TikZモードではPNGは使用できません' : undefined}
                     >
                         PNG
                     </button>
@@ -37,6 +41,11 @@ const Controls: React.FC<Props> = ({
                         SVG
                     </button>
                 </div>
+                {isTikzMode && (
+                    <span style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>
+                        TikZモードではSVGのみ出力できます
+                    </span>
+                )}
             </div>
 
             <div className="control-group">

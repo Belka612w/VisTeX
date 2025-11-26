@@ -80,7 +80,15 @@ const runCommand = (cmd, args, cwd) => {
 };
 
 app.post('/api/compile', async (req, res) => {
-    const { latex, format = 'png', color = '#000000', bgColor = 'transparent', dpi = 300, isFullMode = false } = req.body;
+    const {
+        latex,
+        format = 'png',
+        color = '#000000',
+        bgColor = 'transparent',
+        dpi = 300,
+        isFullMode = false,
+        isTikzMode = false,
+    } = req.body;
     const id = uuidv4();
     const texFile = path.join(TEMP_DIR, `${id}.tex`);
 
@@ -90,11 +98,25 @@ app.post('/api/compile', async (req, res) => {
     let texContent;
     if (isFullMode) {
         texContent = latex;
+    } else if (isTikzMode) {
+        texContent = `
+\\documentclass[tikz,border=2mm]{standalone}
+\\usepackage{amsmath,amssymb,amsfonts, mathtools}
+\\usepackage{xcolor}
+\\usepackage{tikz}
+\\usetikzlibrary{arrows.meta}
+\\begin{document}
+\\color[HTML]{${cleanColor}}
+${latex}
+\\end{document}
+        `;
     } else {
         texContent = `
 \\documentclass[preview]{standalone}
 \\usepackage{amsmath,amssymb,amsfonts, mathtools}
 \\usepackage{xcolor}
+\\usepackage{tikz}
+\\usetikzlibrary{arrows.meta}
 \\begin{document}
 \\color[HTML]{${cleanColor}}
 $ ${latex} $
@@ -125,7 +147,9 @@ $ ${latex} $
         let outputFile;
         let mimeType;
 
-        if (format === 'svg') {
+        const outputFormat = isTikzMode ? 'svg' : format;
+
+        if (outputFormat === 'svg') {
             outputFile = path.join(TEMP_DIR, `${id}.svg`);
             // dvisvgm
             // --no-fonts to convert text to paths (better for standalone usage without font deps)
