@@ -4,11 +4,12 @@ interface Props {
     image: string | null;
     loading: boolean;
     error: string | null;
+    useWhiteBackground: boolean;
 }
 
-const Preview: React.FC<Props> = ({ image, loading, error }) => {
+const Preview: React.FC<Props> = ({ image, loading, error, useWhiteBackground }) => {
     return (
-        <div className="preview-container">
+        <div className={`preview-container ${useWhiteBackground ? 'preview-container--white' : ''}`}>
             {loading && <div style={{ position: 'absolute', color: '#888' }}>コンパイル中...</div>}
             {error && <div className="error-message">{error}</div>}
             {!loading && !error && image && (

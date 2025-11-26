@@ -19,6 +19,7 @@ function App() {
 
   // Settings
   const [format, setFormat] = useState<'png' | 'svg'>('png');
+  const [isPreviewWhiteBg, setIsPreviewWhiteBg] = useState<boolean>(false);
   const [color, setColor] = useState<string>('#ffffff');
   const [bgColor, setBgColor] = useState<string>('transparent');
   const [dpi, setDpi] = useState<number>(300);
@@ -136,8 +137,31 @@ function App() {
         <TemplateManager onSelect={handleTemplateSelect} currentLatex={latex} />
       </div>
       <div className="panel right-panel">
-        <h2>プレビュー</h2>
-        <Preview image={image} loading={loading} error={error} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2>プレビュー</h2>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '12px',
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={isPreviewWhiteBg}
+              onChange={(e) => setIsPreviewWhiteBg(e.target.checked)}
+            />
+            背景を白にする
+          </label>
+        </div>
+        <Preview
+          image={image}
+          loading={loading}
+          error={error}
+          useWhiteBackground={isPreviewWhiteBg}
+        />
         <Controls
           format={format} setFormat={setFormat}
           color={color} setColor={setColor}
