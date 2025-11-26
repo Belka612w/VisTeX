@@ -295,6 +295,7 @@ function App() {
               loading={loading}
               error={error}
               useWhiteBackground={isPreviewWhiteBg}
+              bgColor={bgColor}
             />
           </div>
           <div className="section-card section-card--controls">

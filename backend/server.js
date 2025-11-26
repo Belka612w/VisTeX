@@ -59,6 +59,35 @@ const ensureTemplatesFile = () => {
 
 ensureTemplatesFile();
 
+const isTransparent = (value) => typeof value === 'string' && value.trim().toLowerCase() === 'transparent';
+
+const parseHexColor = (value) => {
+    if (typeof value !== 'string') return null;
+    const hex = value.trim().replace('#', '');
+    if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const normalized = hex.toUpperCase();
+    return {
+        hex: normalized,
+        css: `#${normalized}`,
+        r,
+        g,
+        b,
+    };
+};
+
+const toUnitInterval = (component) => {
+    const unit = (component / 255).toFixed(3);
+    return unit.replace(/\.?0+$/, '') || '0';
+};
+
+const formatDvipngColor = (color) => {
+    if (!color) return 'Transparent';
+    return `rgb ${toUnitInterval(color.r)} ${toUnitInterval(color.g)} ${toUnitInterval(color.b)}`;
+};
+
 // Helper to run command
 const runCommand = (cmd, args, cwd) => {
     return new Promise((resolve, reject) => {
@@ -103,23 +132,30 @@ app.post('/api/compile', async (req, res) => {
     const id = uuidv4();
     const texFile = path.join(TEMP_DIR, `${id}.tex`);
 
-    // Convert hex color to HTML model for xcolor if needed, or just pass it.
-    const cleanColor = color.replace('#', '');
-    const colorWithHash = color.startsWith('#') ? color : `#${cleanColor}`;
-    const bgColorNoHash = bgColor.startsWith('#') ? bgColor.replace('#', '') : bgColor;
-    const bgColorWithHash = bgColor.startsWith('#') ? bgColor : (bgColor === 'transparent' ? bgColor : `#${bgColor}`);
+    const parsedColor = parseHexColor(color) || parseHexColor('#000000');
+    const parsedBgColor = isTransparent(bgColor) ? null : parseHexColor(bgColor);
+    const textColorHtml = parsedColor.hex;
+    const bgColorHtml = parsedBgColor ? parsedBgColor.hex : '';
+    const bgColorCss = parsedBgColor ? parsedBgColor.css : '';
+    const bgColorCssForSvg = parsedBgColor ? parsedBgColor.css : 'transparent';
+    const backgroundCommand = parsedBgColor ? `\\pagecolor[HTML]{${bgColorHtml}}` : '';
+
     const customTemplateSource = typeof customTemplate === 'string' ? customTemplate : '';
     const hasCustomTemplate = customTemplateSource.trim().length > 0;
 
+    const templateReplacements = {
+        LATEX: latex,
+        COLOR: textColorHtml,
+        COLOR_HEX: parsedColor.css,
+        BG_COLOR: bgColorHtml,
+        BG_COLOR_HEX: bgColorCss,
+        BG_COLOR_DVIPNG: parsedBgColor ? formatDvipngColor(parsedBgColor) : '',
+        BG_COLOR_COMMAND: backgroundCommand,
+    };
+
     let texContent;
     if (hasCustomTemplate) {
-        texContent = applyTemplatePlaceholders(customTemplateSource, {
-            LATEX: latex,
-            COLOR: cleanColor,
-            COLOR_HEX: colorWithHash,
-            BG_COLOR: bgColorNoHash,
-            BG_COLOR_HEX: bgColorWithHash,
-        });
+        texContent = applyTemplatePlaceholders(customTemplateSource, templateReplacements);
     } else if (isFullMode) {
         texContent = latex;
     } else if (isTikzMode) {
@@ -130,7 +166,8 @@ app.post('/api/compile', async (req, res) => {
 \\usepackage{tikz}
 \\usetikzlibrary{arrows.meta}
 \\begin{document}
-\\color[HTML]{${cleanColor}}
+${backgroundCommand}
+\\color[HTML]{${textColorHtml}}
 ${latex}
 \\end{document}
         `;
@@ -142,7 +179,8 @@ ${latex}
 \\usepackage{tikz}
 \\usetikzlibrary{arrows.meta}
 \\begin{document}
-\\color[HTML]{${cleanColor}}
+${backgroundCommand}
+\\color[HTML]{${textColorHtml}}
 $ ${latex} $
 \\end{document}
         `;
@@ -177,11 +215,7 @@ $ ${latex} $
             outputFile = path.join(TEMP_DIR, `${id}.svg`);
             // dvisvgm
             // --no-fonts to convert text to paths (better for standalone usage without font deps)
-            // If bgColor is not transparent, we might need to add a rect. 
-            // But dvisvgm doesn't have a simple bg flag like dvipng.
-            // We can rely on the frontend to set the background of the SVG container, 
-            // or we can wrap the latex in a colorbox if needed.
-            // For now, we'll produce transparent SVG (default) and let frontend handle BG.
+            // Background color is injected manually below when requested.
             await runCommand('dvisvgm', ['--no-fonts', '-o', outputFile, dviFile], TEMP_DIR);
             mimeType = 'image/svg+xml';
         } else {
@@ -190,9 +224,16 @@ $ ${latex} $
             // -D dpi
             // -bg Transparent (or color)
             // -T tight (crop)
-            const bgArg = bgColor === 'transparent' ? 'Transparent' : bgColor;
+            const bgArg = formatDvipngColor(parsedBgColor);
             await runCommand('dvipng', ['-T', 'tight', '-D', dpi, '-bg', bgArg, '-o', outputFile, dviFile], TEMP_DIR);
             mimeType = 'image/png';
+        }
+
+        if (outputFormat === 'svg' && parsedBgColor) {
+            const svgContent = await fs.readFile(outputFile, 'utf8');
+            const bgRect = `<rect width="100%" height="100%" fill="${bgColorCssForSvg}" />`;
+            const updatedSvg = svgContent.replace(/(<svg[^>]*>)/i, `$1${bgRect}`);
+            await fs.writeFile(outputFile, updatedSvg, 'utf8');
         }
 
         const imageBuffer = await fs.readFile(outputFile);

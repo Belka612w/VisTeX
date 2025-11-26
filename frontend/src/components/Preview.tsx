@@ -5,11 +5,25 @@ interface Props {
     loading: boolean;
     error: string | null;
     useWhiteBackground: boolean;
+    bgColor: string;
 }
 
-const Preview: React.FC<Props> = ({ image, loading, error, useWhiteBackground }) => {
+const Preview: React.FC<Props> = ({ image, loading, error, useWhiteBackground, bgColor }) => {
+    const backgroundStyle: React.CSSProperties = {};
+
+    if (useWhiteBackground) {
+        backgroundStyle.background = '#ffffff';
+        backgroundStyle.backgroundImage = 'none';
+    } else if (bgColor && bgColor !== 'transparent') {
+        backgroundStyle.background = bgColor;
+        backgroundStyle.backgroundImage = 'none';
+    }
+
     return (
-        <div className={`preview-container ${useWhiteBackground ? 'preview-container--white' : ''}`}>
+        <div
+            className={`preview-container ${useWhiteBackground ? 'preview-container--white' : ''}`}
+            style={backgroundStyle}
+        >
             {loading && (
                 <div className="preview-overlay" role="status" aria-live="polite">
                     コンパイル中...
