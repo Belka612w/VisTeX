@@ -35,7 +35,7 @@ body {
   min-height: 100vh;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 900px) {
   .app-container {
     grid-template-columns: 1fr;
   }
