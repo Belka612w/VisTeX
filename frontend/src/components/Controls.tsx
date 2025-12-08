@@ -15,6 +15,12 @@ interface Props {
     onCopy: () => void;
     canCopy: boolean;
     copyStatus: CopyStatus;
+    favoriteTextColors: string[];
+    onAddFavoriteTextColor: () => void;
+    onRemoveFavoriteTextColor: (c: string) => void;
+    favoriteBgColors: string[];
+    onAddFavoriteBgColor: () => void;
+    onRemoveFavoriteBgColor: (c: string) => void;
 }
 
 const Controls: React.FC<Props> = ({
@@ -26,7 +32,13 @@ const Controls: React.FC<Props> = ({
     isTikzMode,
     onCopy,
     canCopy,
-    copyStatus
+    copyStatus,
+    favoriteTextColors,
+    onAddFavoriteTextColor,
+    onRemoveFavoriteTextColor,
+    favoriteBgColors,
+    onAddFavoriteBgColor,
+    onRemoveFavoriteBgColor
 }) => {
     return (
         <div className="controls">
@@ -57,27 +69,99 @@ const Controls: React.FC<Props> = ({
 
             <div className="control-group">
                 <label>文字色</label>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
+                <div className="color-row">
+                    <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                        className="color-input-fixed"
+                    />
                     <input
                         type="text"
                         value={color}
                         onChange={(e) => setColor(e.target.value)}
-                        style={{ flex: '1 1 140px' }}
+                        className="color-text-input"
                         aria-label="文字色コードを入力"
                     />
+                    <button
+                        className="color-add-btn"
+                        onClick={onAddFavoriteTextColor}
+                        title="お気に入りに追加"
+                    >
+                        +
+                    </button>
                 </div>
+                {favoriteTextColors.length > 0 && (
+                    <div className="favorite-colors">
+                        {favoriteTextColors.map((c) => (
+                            <button
+                                key={c}
+                                className="favorite-color-btn"
+                                style={{ backgroundColor: c }}
+                                onClick={() => setColor(c)}
+                                title={`${c} を選択`}
+                            >
+                                <span
+                                    className="favorite-color-remove"
+                                    onClick={(e) => { e.stopPropagation(); onRemoveFavoriteTextColor(c); }}
+                                    title="削除"
+                                >
+                                    ×
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="control-group">
                 <label>背景</label>
-                <select value={bgColor === 'transparent' ? 'transparent' : 'custom'} onChange={(e) => setBgColor(e.target.value === 'transparent' ? 'transparent' : '#ffffff')}>
-                    <option value="transparent">透明</option>
-                    <option value="custom">カスタム色</option>
-                </select>
-                {bgColor !== 'transparent' && (
-                    <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-                        <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} />
+                <div className="bg-color-row">
+                    <select
+                        value={bgColor === 'transparent' ? 'transparent' : 'custom'}
+                        onChange={(e) => setBgColor(e.target.value === 'transparent' ? 'transparent' : '#ffffff')}
+                        className="bg-select"
+                    >
+                        <option value="transparent">透明</option>
+                        <option value="custom">カスタム色</option>
+                    </select>
+                    {bgColor !== 'transparent' && (
+                        <>
+                            <input
+                                type="color"
+                                value={bgColor}
+                                onChange={(e) => setBgColor(e.target.value)}
+                                className="color-input-fixed"
+                            />
+                            <button
+                                className="color-add-btn"
+                                onClick={onAddFavoriteBgColor}
+                                title="お気に入りに追加"
+                            >
+                                +
+                            </button>
+                        </>
+                    )}
+                </div>
+                {favoriteBgColors.length > 0 && (
+                    <div className="favorite-colors">
+                        {favoriteBgColors.map((c) => (
+                            <button
+                                key={c}
+                                className="favorite-color-btn"
+                                style={{ backgroundColor: c }}
+                                onClick={() => setBgColor(c)}
+                                title={`${c} を選択`}
+                            >
+                                <span
+                                    className="favorite-color-remove"
+                                    onClick={(e) => { e.stopPropagation(); onRemoveFavoriteBgColor(c); }}
+                                    title="削除"
+                                >
+                                    ×
+                                </span>
+                            </button>
+                        ))}
                     </div>
                 )}
             </div>

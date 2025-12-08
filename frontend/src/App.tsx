@@ -17,6 +17,7 @@ export type CopyStatus = 'idle' | 'copying' | 'copied' | 'failed';
 type TemplateMode = 'standard' | 'tikz';
 
 const TEMPLATE_STORAGE_KEY = 'vistex.customTemplates';
+const FAVORITE_COLORS_KEY = 'vistex.favoriteColors';
 
 const DEFAULT_STANDARD_TEMPLATE = String.raw`\documentclass[preview]{standalone}
 \usepackage{amsmath,amssymb,amsfonts, mathtools}
@@ -24,6 +25,7 @@ const DEFAULT_STANDARD_TEMPLATE = String.raw`\documentclass[preview]{standalone}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta}
 \begin{document}
+{{BG_COLOR_COMMAND}}
 \color[HTML]{ {{COLOR}} }
 $ {{LATEX}} $
 \end{document}
@@ -35,6 +37,7 @@ const DEFAULT_TIKZ_TEMPLATE = String.raw`\documentclass[tikz,border=2mm]{standal
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta}
 \begin{document}
+{{BG_COLOR_COMMAND}}
 \color[HTML]{ {{COLOR}} }
 {{LATEX}}
 \end{document}
@@ -68,6 +71,8 @@ function App() {
   });
   const [templateStorageReady, setTemplateStorageReady] = useState<boolean>(false);
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
+  const [favoriteTextColors, setFavoriteTextColors] = useState<string[]>([]);
+  const [favoriteBgColors, setFavoriteBgColors] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -95,9 +100,25 @@ function App() {
       }
     } catch (err) {
       console.warn('Failed to load custom templates', err);
-    } finally {
-      setTemplateStorageReady(true);
     }
+
+    // Load favorite colors
+    try {
+      const favColorsRaw = window.localStorage.getItem(FAVORITE_COLORS_KEY);
+      if (favColorsRaw) {
+        const favColors = JSON.parse(favColorsRaw);
+        if (Array.isArray(favColors.textColors)) {
+          setFavoriteTextColors(favColors.textColors);
+        }
+        if (Array.isArray(favColors.bgColors)) {
+          setFavoriteBgColors(favColors.bgColors);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load favorite colors', e);
+    }
+
+    setTemplateStorageReady(true);
   }, []);
 
   useEffect(() => {
@@ -108,6 +129,15 @@ function App() {
     };
     window.localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(payload));
   }, [customTemplates, useCustomTemplate, templateStorageReady]);
+
+  useEffect(() => {
+    if (!templateStorageReady || typeof window === 'undefined') return;
+    const favPayload = {
+      textColors: favoriteTextColors,
+      bgColors: favoriteBgColors,
+    };
+    window.localStorage.setItem(FAVORITE_COLORS_KEY, JSON.stringify(favPayload));
+  }, [favoriteTextColors, favoriteBgColors, templateStorageReady]);
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const copyResetTimer = useRef<number | null>(null);
@@ -208,23 +238,60 @@ function App() {
       setCopyStatus('copying');
       const response = await fetch(image);
       const blob = await response.blob();
+      const isSvg = blob.type === 'image/svg+xml' || image.startsWith('data:image/svg+xml');
 
       if (navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
-        const clipboardItem = new ClipboardItem({ [blob.type || 'image/png']: blob });
-        await navigator.clipboard.write([clipboardItem]);
+        try {
+          const clipboardItem = new ClipboardItem({ [blob.type || 'image/png']: blob });
+          await navigator.clipboard.write([clipboardItem]);
+          setCopyStatus('copied');
+        } catch (clipErr) {
+          // ClipboardItem failed, fallback for SVG
+          if (isSvg && navigator.clipboard.writeText) {
+            const svgText = await blob.text();
+            await navigator.clipboard.writeText(svgText);
+            setCopyStatus('copied');
+          } else {
+            throw clipErr;
+          }
+        }
       } else if (navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(image);
+        if (isSvg) {
+          const svgText = await blob.text();
+          await navigator.clipboard.writeText(svgText);
+        } else {
+          await navigator.clipboard.writeText(image);
+        }
+        setCopyStatus('copied');
       } else {
         throw new Error('Clipboard API is not available');
       }
-
-      setCopyStatus('copied');
     } catch (err) {
       console.error('Failed to copy image', err);
       setCopyStatus('failed');
     } finally {
       copyResetTimer.current = window.setTimeout(() => setCopyStatus('idle'), 1800);
     }
+  };
+
+  const handleAddFavoriteTextColor = () => {
+    if (!favoriteTextColors.includes(color)) {
+      setFavoriteTextColors(prev => [...prev, color]);
+    }
+  };
+
+  const handleRemoveFavoriteTextColor = (c: string) => {
+    setFavoriteTextColors(prev => prev.filter(fc => fc !== c));
+  };
+
+  const handleAddFavoriteBgColor = () => {
+    if (bgColor !== 'transparent' && !favoriteBgColors.includes(bgColor)) {
+      setFavoriteBgColors(prev => [...prev, bgColor]);
+    }
+  };
+
+  const handleRemoveFavoriteBgColor = (c: string) => {
+    setFavoriteBgColors(prev => prev.filter(fc => fc !== c));
   };
 
   const handleTemplateSelect = (templateLatex: string) => {
@@ -358,6 +425,12 @@ function App() {
               onCopy={handleCopyToClipboard}
               canCopy={!!image && isClipboardAvailable}
               copyStatus={copyStatus}
+              favoriteTextColors={favoriteTextColors}
+              onAddFavoriteTextColor={handleAddFavoriteTextColor}
+              onRemoveFavoriteTextColor={handleRemoveFavoriteTextColor}
+              favoriteBgColors={favoriteBgColors}
+              onAddFavoriteBgColor={handleAddFavoriteBgColor}
+              onRemoveFavoriteBgColor={handleRemoveFavoriteBgColor}
             />
           </div>
         </div>
