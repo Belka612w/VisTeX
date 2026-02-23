@@ -2,8 +2,7 @@
   description = "VisTeX development environment (Node.js + TeX Live) using Nix flakes";
 
   inputs = {
-    # 安定版チャネルは必要に応じて変更してください
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -18,7 +17,7 @@
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             # Node.js (README では v16+ 推奨なので LTS を利用)
-            nodejs
+            nodejs_22
 
             # LaTeX, dvipng, dvisvgm など一式を含む TeX Live
             texlive.combined.scheme-full
@@ -39,4 +38,3 @@
         };
       });
 }
-

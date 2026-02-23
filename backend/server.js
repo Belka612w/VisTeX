@@ -1,10 +1,15 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { spawn } = require('child_process');
-const fs = require('fs-extra');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import fs from 'fs-extra';
+import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { spawn } from 'child_process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 3001;
@@ -161,10 +166,13 @@ app.post('/api/compile', async (req, res) => {
     } else if (isTikzMode) {
         texContent = `
 \\documentclass[tikz,border=2mm]{standalone}
-\\usepackage{amsmath,amssymb,amsfonts, mathtools}
+\\usepackage{amsmath,amssymb,amsfonts, mathtools, bm}
 \\usepackage{xcolor}
 \\usepackage{tikz}
+\\usepackage{tikz-cd}
+\\usetikzlibrary{arrows, calc, positioning, quotes}
 \\usetikzlibrary{arrows.meta}
+\\usetikzlibrary{decorations.pathmorphing}
 \\begin{document}
 ${backgroundCommand}
 \\color[HTML]{${textColorHtml}}
